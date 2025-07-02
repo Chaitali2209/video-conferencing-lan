@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Local WebRTC Chat</title>
+  <style>
+    video { width: 45%; margin: 10px; border: 1px solid #ccc; }
+    textarea { width: 90%; height: 100px; }
+    #chatBox { width: 90%; height: 150px; }
+  </style>
+</head>
+<body>
+  <h1>Local WebRTC with Chat and File Transfer</h1>
+
+  <button id="start">Start</button><br><br>
+
+  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="remoteVideo" autoplay playsinline></video>
+
+  <hr>
+  <h2>Chat</h2>
+  <textarea id="chatBox" readonly></textarea><br>
+  <input type="text" id="messageInput" placeholder="Type a message...">
+  <button onclick="sendMessage()">Send</button>
+
+  <hr>
+  <h2>File Transfer</h2>
+  <input type="file" id="fileInput">
+  <button onclick="sendFile()">Send File</button>
+  <p id="fileStatus"></p>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="client.js"></script>
+</body>
+</html>
