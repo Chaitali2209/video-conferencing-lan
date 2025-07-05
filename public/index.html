@@ -1,34 +1,293 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Local WebRTC Chat</title>
+  <meta charset="UTF-8">
+  <title>WebRTC Chat + File Transfer</title>
   <style>
-    video { width: 45%; margin: 10px; border: 1px solid #ccc; }
-    textarea { width: 90%; height: 100px; }
-    #chatBox { width: 90%; height: 150px; }
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: #f1f3f6;
+    }
+
+    header {
+      background: #1e90ff;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+    }
+
+    main {
+      display: flex;
+      height: calc(100vh - 64px);
+      overflow: hidden;
+    }
+
+    .video-section {
+      flex: 3;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 20px;
+      background: #f8f9fa;
+    }
+
+    .video-row {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    video {
+      width: 100%;
+      max-width: 500px;
+      height: auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      background: black;
+    }
+
+    #start {
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: none;
+      background: #28a745;
+      color: white;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .side-panel {
+      flex: 2;
+      background: white;
+      border-left: 1px solid #ddd;
+      display: flex;
+      flex-direction: column;
+      padding: 0;
+    }
+
+    .tab-buttons {
+      display: flex;
+      border-bottom: 1px solid #eee;
+    }
+
+    .tab-buttons button {
+      flex: 1;
+      padding: 15px;
+      font-size: 16px;
+      border: none;
+      background: #f5f5f5;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .tab-buttons button.active {
+      background: white;
+      border-bottom: 2px solid #1e90ff;
+      color: #1e90ff;
+      font-weight: bold;
+    }
+
+    .tab-content {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    .tab {
+      display: none;
+    }
+
+    .tab.active {
+      display: block;
+    }
+
+    #chatBox {
+      background: #f7f9fc;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+      height: 250px;
+      overflow-y: auto;
+      font-family: monospace;
+      margin-bottom: 10px;
+    }
+
+    .chat-message {
+      margin-bottom: 8px;
+    }
+
+    .chat-message.you {
+      text-align: right;
+      color: #1e90ff;
+    }
+
+    .chat-message.peer {
+      text-align: left;
+      color: #333;
+    }
+
+    #messageInput {
+      width: calc(100% - 90px);
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .input-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .send-btn {
+      background: #1e90ff;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+
+    .file-transfer {
+      margin-top: 10px;
+    }
+
+    #fileStatus {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #28a745;
+    }
+
+    #fileList {
+  margin-top: 10px;
+}
+
+.file-item {
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.file-item a {
+  color: #1e90ff;
+  text-decoration: none;
+}
+
+.file-item a:hover {
+  text-decoration: underline;
+}
+
+
+    input[type="file"] {
+      flex: 1;
+    }
+
+    @media (max-width: 1000px) {
+      main {
+        flex-direction: column;
+      }
+
+      .side-panel {
+        border-left: none;
+        border-top: 1px solid #ddd;
+        flex: none;
+        height: 350px;
+      }
+    }
+
+    @media (max-width: 700px) {
+  .video-row {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  video {
+    width: 90%;
+  }
+}
+
   </style>
 </head>
 <body>
-  <h1>Local WebRTC with Chat and File Transfer</h1>
 
-  <button id="start">Start</button><br><br>
+  <header>📹 Local WebRTC Chat & File Sharing</header>
 
-  <video id="localVideo" autoplay muted playsinline></video>
-  <video id="remoteVideo" autoplay playsinline></video>
+  <main>
+    <div class="video-section">
+      <button id="start">Start</button>
+      <div class="video-row">
+        <video id="localVideo" autoplay muted playsinline></video>
+        <video id="remoteVideo" autoplay playsinline></video>
+      </div>
+    </div>
 
-  <hr>
-  <h2>Chat</h2>
-  <textarea id="chatBox" readonly></textarea><br>
-  <input type="text" id="messageInput" placeholder="Type a message...">
-  <button onclick="sendMessage()">Send</button>
+    <div class="side-panel">
+      <div class="tab-buttons">
+        <button class="tab-toggle active" data-tab="chatTab">Chat</button>
+        <button class="tab-toggle" data-tab="fileTab">Files</button>
+      </div>
 
-  <hr>
-  <h2>File Transfer</h2>
-  <input type="file" id="fileInput">
-  <button onclick="sendFile()">Send File</button>
-  <p id="fileStatus"></p>
+      <div class="tab-content">
+        <div class="tab active" id="chatTab">
+          <div id="chatBox"></div>
+          <div class="input-group">
+            <input type="text" id="messageInput" placeholder="Type a message...">
+            <button class="send-btn" onclick="sendMessage()">Send</button>
+          </div>
+        </div>
+
+        <div class="tab" id="fileTab">
+          <div class="input-group">
+            <input type="file" id="fileInput">
+            <button class="send-btn" onclick="sendFile()">Send File</button>
+          </div>
+          <div class="file-transfer">
+            <p id="fileStatus"></p>
+            <div id="fileList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
+  <script>
+    // Toggle logic for tabs
+    const tabButtons = document.querySelectorAll('.tab-toggle');
+    const tabContents = document.querySelectorAll('.tab');
+
+    tabButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        tabButtons.forEach(btn => btn.classList.remove('active'));
+        tabContents.forEach(tab => tab.classList.remove('active'));
+
+        button.classList.add('active');
+        document.getElementById(button.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Enhance chat appearance in client.js
+    function appendMessage(sender, msg) {
+      const chatBox = document.getElementById("chatBox");
+      const message = document.createElement("div");
+      message.className = "chat-message " + (sender === "You" ? "you" : "peer");
+      message.textContent = `${sender}: ${msg}`;
+      chatBox.appendChild(message);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    window.appendMessage = appendMessage; // Make it accessible to client.js
+  </script>
+
 </body>
 </html>

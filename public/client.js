@@ -9,19 +9,25 @@ const fileStatus = document.getElementById("fileStatus");
 
 let localStream;
 let peerConnection;
+let isCaller = false;
 
 const config = {
-  iceServers: [] // no STUN/TURN needed on LAN
+  iceServers: [] // no STUN/TURN for local network
 };
 
 startBtn.onclick = async () => {
   startBtn.disabled = true;
+  isCaller = true;
+  await startPeerConnection();
+};
 
+async function startPeerConnection() {
   // Get local media
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  
   localVideo.srcObject = localStream;
 
-  // Create peer connection
+  // Create RTCPeerConnection
   peerConnection = new RTCPeerConnection(config);
 
   // Add local tracks
@@ -29,29 +35,33 @@ startBtn.onclick = async () => {
     peerConnection.addTrack(track, localStream);
   });
 
-  // Handle remote stream
+  // Handle remote track
   peerConnection.ontrack = event => {
     if (!remoteVideo.srcObject) {
       remoteVideo.srcObject = event.streams[0];
     }
   };
 
-  // Handle ICE candidates
+  // ICE candidate handling
   peerConnection.onicecandidate = event => {
     if (event.candidate) {
       socket.emit("candidate", event.candidate);
     }
   };
 
-  // Initiate offer if first to start
-  const offer = await peerConnection.createOffer();
-  await peerConnection.setLocalDescription(offer);
-  socket.emit("offer", offer);
-};
+  // If this peer is initiating the call, create and send offer
+  if (isCaller) {
+    const offer = await peerConnection.createOffer();
+    await peerConnection.setLocalDescription(offer);
+    socket.emit("offer", offer);
+  }
+}
 
-// Handle incoming signaling
+// Handle offer
 socket.on("offer", async offer => {
-  if (!peerConnection) startBtn.click(); // auto-start if not started
+  if (!peerConnection) {
+    await startPeerConnection();
+  }
 
   await peerConnection.setRemoteDescription(offer);
   const answer = await peerConnection.createAnswer();
@@ -59,19 +69,22 @@ socket.on("offer", async offer => {
   socket.emit("answer", answer);
 });
 
+// Handle answer
 socket.on("answer", async answer => {
   await peerConnection.setRemoteDescription(answer);
 });
 
+// Handle ICE candidates
 socket.on("candidate", async candidate => {
   try {
     await peerConnection.addIceCandidate(candidate);
-  } catch (e) {
-    console.error("Error adding ICE candidate:", e);
+  } catch (err) {
+    console.error("Error adding received ICE candidate", err);
   }
 });
 
-// Chat
+
+// --- Chat ---
 function sendMessage() {
   const msg = messageInput.value.trim();
   if (msg) {
@@ -90,28 +103,39 @@ function appendMessage(sender, msg) {
   chatBox.scrollTop = chatBox.scrollHeight;
 }
 
-// File transfer
+
+// --- File Transfer ---
 function sendFile() {
   const file = fileInput.files[0];
   if (file) {
     const reader = new FileReader();
     reader.onload = () => {
-      socket.emit("file-transfer", {
+      const fileData = {
         fileName: file.name,
         fileData: reader.result
-      });
+      };
+      socket.emit("file-transfer", fileData);
       fileStatus.innerText = `Sent file: ${file.name}`;
+      appendFileLink("You", fileData); // Add to list immediately
     };
     reader.readAsDataURL(file);
   }
 }
 
 socket.on("file-transfer", data => {
-  const link = document.createElement("a");
-  link.href = data.fileData;
-  link.download = data.fileName;
-  link.textContent = `Download ${data.fileName}`;
-  link.style.display = "block";
-  document.body.appendChild(link);
   fileStatus.innerText = `Received file: ${data.fileName}`;
+  appendFileLink("Peer", data);
 });
+
+function appendFileLink(sender, data) {
+  const fileList = document.getElementById("fileList");
+  const item = document.createElement("div");
+  item.className = "file-item";
+  item.innerHTML = `
+    <strong>${sender}:</strong>
+    <a href="${data.fileData}" download="${data.fileName}">
+      ${data.fileName}
+    </a>
+  `;
+  fileList.appendChild(item);
+}
