@@ -219,15 +219,15 @@
 </head>
 <body>
 
-  <header>📹 Local WebRTC Chat & File Sharing</header>
+  <!-- <header>📹 Local WebRTC Chat & File Sharing</header> -->
 
   <main>
     <div class="video-section">
       <button id="start">Start</button>
-      <div class="video-row">
-        <video id="localVideo" autoplay muted playsinline></video>
-        <video id="remoteVideo" autoplay playsinline></video>
-      </div>
+      <div class="video-container">
+      <video id="remoteVideo" autoplay playsinline></video>
+      <video id="localVideo" class="local-preview" autoplay muted playsinline></video>
+    </div>
     </div>
 
     <div class="side-panel">
