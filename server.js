@@ -20,7 +20,7 @@ if (useHttps) {
   server = http.createServer(app);
 }
 
-const io = socketIo(server);
+const io = socketIo(server, { maxHttpBufferSize: 5 * 1024 * 1024});
 
 io.on("connection", socket => {
   console.log("A user connected");

@@ -21,6 +21,31 @@ startBtn.onclick = async () => {
   await startPeerConnection();
 };
 
+/* ---------- Local video / mic toggles ---------- */
+const toggleVideoBtn = document.getElementById('toggleVideo');
+const toggleAudioBtn = document.getElementById('toggleAudio');
+
+toggleVideoBtn.onclick = () => {
+  if (!localStream) return;
+  const videoTrack = localStream.getVideoTracks()[0];
+  videoTrack.enabled = !videoTrack.enabled;
+  toggleVideoBtn.textContent = videoTrack.enabled ? 'Video Off' : 'Video On';
+};
+
+toggleAudioBtn.onclick = () => {
+  if (!localStream) return;
+  const audioTrack = localStream.getAudioTracks()[0];
+  audioTrack.enabled = !audioTrack.enabled;
+  toggleAudioBtn.textContent = audioTrack.enabled ? 'Mic Off' : 'Mic On';
+};
+
+/* Enable buttons once we have a stream */
+function enableMediaToggles() {
+  toggleVideoBtn.disabled = false;
+  toggleAudioBtn.disabled = false;
+}
+
+
 async function startPeerConnection() {
   // Get local media
   localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
