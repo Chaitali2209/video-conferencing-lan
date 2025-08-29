@@ -4,7 +4,7 @@ const https = require("https"); // for HTTPS (optional)
 const http = require("http");   // for fallback
 const socketIo = require("socket.io");
 
-const useHttps = false; // change to true if using HTTPS with certs
+const useHttps = true; // change to true if using HTTPS with certs
 
 const app = express();
 app.use(express.static("public"));
@@ -12,8 +12,8 @@ app.use(express.static("public"));
 let server;
 if (useHttps) {
   const options = {
-    key: fs.readFileSync("key.pem"),
-    cert: fs.readFileSync("cert.pem")
+    key: fs.readFileSync("server-key.pem"),
+    cert: fs.readFileSync("server-cert.pem")
   };
   server = https.createServer(options, app);
 } else {
@@ -38,5 +38,5 @@ io.on("connection", socket => {
 
 const PORT = 3000;
 server.listen(PORT, () => {
-  console.log(`Server running on http${useHttps ? "s" : ""}://localhost:${PORT}`);
+  console.log(`Server running on https://192.168.0.135:${PORT}`);
 });

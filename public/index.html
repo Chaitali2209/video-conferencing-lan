@@ -3,302 +3,252 @@
 
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WebRTC Chat + File Transfer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>WebRTC Chat + File Transfer (Responsive + Mobile Bottom Sheet)</title>
   <style>
     /* ---- Local Raleway ---- */
-    @font-face {
-      font-family: 'Raleway';
-      src: url('./fonts/Raleway-Regular.ttf') format('truetype');
-      font-weight: 400;
-      font-style: normal;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: 'Raleway';
-      src: url('./fonts/Raleway-SemiBold.ttf') format('truetype');
-      font-weight: 600;
-      font-style: normal;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: 'Raleway';
-      src: url('./fonts/Raleway-Bold.ttf') format('truetype');
-      font-weight: 700;
-      font-style: normal;
-      font-display: swap;
-    }
+    @font-face { font-family: 'Raleway'; src: url('./fonts/Raleway-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Raleway'; src: url('./fonts/Raleway-SemiBold.ttf') format('truetype'); font-weight: 600; font-style: normal; font-display: swap; }
+    @font-face { font-family: 'Raleway'; src: url('./fonts/Raleway-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; font-display: swap; }
 
     :root {
-      --brand: #13768f;
-      --bg-light: #f1f3f6;
-      --panel-bg: #ffffff;
-      --shadow: 0 4px 16px rgba(0, 0, 0, .08);
-      --radius: 12px;
+      --brand: #13768f; --bg-light: #f1f3f6; --panel-bg: #ffffff; --shadow: 0 4px 16px rgba(0,0,0,.08); --radius: 12px;
+      --scrim: rgba(0,0,0,.35);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
-      font-family: 'Raleway', sans-serif;
-      background: var(--bg-light);
-      color: #222;
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
+    body { font-family: 'Raleway', sans-serif; background: var(--bg-light); color: #222; display: flex; flex-direction: column; height: 100dvh; overflow: hidden; }
 
-    header {
-      background: var(--brand);
-      color: #fff;
-      text-align: center;
-      padding: 1rem;
-      font-size: 1.25rem;
-      font-weight: 600;
-      flex-shrink: 0;
-    }
+    header { background: var(--brand); color: #fff; text-align: center; padding: 1rem; font-size: clamp(1rem, 1.5vw + .6rem, 1.25rem); font-weight: 600; flex-shrink: 0; }
 
     /* ---------- Layout ---------- */
-    .main {
-      display: flex;
-      flex: 1 1 auto;
-      overflow: hidden;
-    }
+    .main { display: flex; flex: 1 1 auto; overflow: hidden; }
 
-    .video-area {
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-      gap: 1rem;
-      min-width: 0;
-    }
+    .video-area { flex: 1 1 auto; display: flex; flex-direction: column; align-items: center; padding: 1rem; gap: 1rem; min-width: 0; }
+    .video-stack { position: relative; width: 100%; max-width: 100%; }
 
-    .video-wrapper {
-      position: relative;
-      width: 100%;
-      height: 80%;
-      max-width: 100%;
-      box-shadow: var(--shadow);
-      border-radius: var(--radius);
-      background: #cdd1d2;
-      border: 1px solid #13768f;
-      display: flex;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .8);
-    }
+    .video-wrapper { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16/9; height: auto; box-shadow: var(--shadow); border-radius: var(--radius); background: #cdd1d2; border: 1px solid #13768f; overflow: hidden; }
 
-    .video-wrapper video {
-      width: 90%;
-      height: auto;
-      border-radius: var(--radius);
-    }
+    #remoteVideo { width: 100%; height: 100%; display: block; object-fit: contain; border-radius: 0; }
 
-    .local-preview {
-      position: absolute;
-      bottom: 1rem;
-      right: 1rem;
-      width: 24%;
-      max-width: 220px;
-      border: 3px solid #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, .8);
-    }
+    #localVideo.local-preview { position: absolute; bottom: .75rem; right: .75rem; width: 24%; max-width: 220px; border: 2px solid #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.8); }
 
-    .primary-btn {
-      font-family: 'Raleway';
-      background: linear-gradient(to right, #13768f, #2C5162);
-      border: none;
-      padding: .75rem 2.3rem;
-      color: #fff;
-      font-size: 1.2rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-    }
+    .primary-btn { font-family: 'Raleway', sans-serif; background: linear-gradient(to right, #13768f, #2C5162); border: none; padding: .75rem 1.25rem; color: #fff; font-size: clamp(.95rem, 1vw + .6rem, 1.1rem); border-radius: var(--radius); cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.08); transition: transform .08s ease; }
+    .primary-btn:active { transform: scale(.98); }
 
-    /* ---------- Resizable Splitter ---------- */
-    .resizer {
-      width: 6px;
-      cursor: col-resize;
-      background: #ccc;
-      flex-shrink: 0;
-    }
+    /* ---------- Resizable Splitter (desktop) ---------- */
+    .resizer { width: 6px; cursor: col-resize; background: #ccc; flex-shrink: 0; user-select: none; touch-action: none; }
+    .resizer:hover { background: #bbb; }
 
-    .resizer:hover {
-      background: #bbb;
-    }
+    /* ---------- Side panel (desktop) / Bottom sheet (mobile) ---------- */
+    .side-panel { width: 320px; min-width: 260px; max-width: 600px; background: var(--panel-bg); border-left: 1px solid #ccc; display: flex; flex-direction: column; overflow: hidden; }
 
-    .side-panel {
-      width: 320px;
-      min-width: 240px;
-      max-width: 600px;
-      background: var(--panel-bg);
-      border-left: 1px solid #ccc;
-      display: flex;
-      flex-direction: column;
-      overflow: auto;
-    }
+    .panel-tabs { display: flex; border-bottom: 1px solid #13768f; flex-shrink: 0; position: sticky; top: 0; background: var(--panel-bg); z-index: 1; }
+    .panel-tabs button { font-family: 'Raleway', sans-serif; flex: 1; padding: .75rem; background: transparent; border: none; font-size: 1rem; cursor: pointer; }
+    .panel-tabs button.active { background: var(--bg-light); font-weight: 600; color: var(--brand); }
 
-    .panel-tabs {
-      display: flex;
-      border-bottom: 1px solid #13768f;
-      flex-shrink: 0;
-    }
+    .tab-content { flex: 1 1 auto; padding: 1rem; overflow: hidden; display: flex; flex-direction: column; gap: .75rem; }
 
-    .panel-tabs button {
-      font-family: 'Raleway';
-      flex: 1;
-      padding: .75rem;
-      background: transparent;
-      border: none;
-      font-size: 1rem;
-      cursor: pointer;
-    }
+    .chat-box { background: var(--bg-light); border: 1px solid #ddd; border-radius: var(--radius); padding: .75rem; flex: 1 1 auto; overflow-y: auto; font-family: 'Raleway', sans-serif; font-size: 1rem; }
+    .msg.you { text-align: right; color: var(--brand); }
+    .msg.peer { text-align: left; }
 
-    .panel-tabs button.active {
-      background: var(--bg-light);
-      font-weight: 600;
-      color: var(--brand);
-    }
+    .input-row { display: flex; align-items: center; gap: .5rem; flex-wrap: wrap; }
+    .input-row input[type=text] { flex: 1 1 200px; min-width: 0; padding: .6rem .75rem; border: 1px solid #ccc; border-radius: var(--radius); font-family: 'Raleway', sans-serif; }
+    .send-btn { background: linear-gradient(to right, #13768f, #2C5162); color: #fff; border: none; border-radius: var(--radius); padding: .6rem 1rem; cursor: pointer; font-family: 'Raleway', sans-serif; flex: 0 0 auto; }
 
-    .tab-content {
-      flex: 1 1 auto;
-      padding: 1rem;
-      overflow-y: auto;
-    }
+    .file-list { flex: 1 1 auto; overflow-y: auto; }
+    .file-list a { color: var(--brand); text-decoration: none; }
+    .file-list a:hover { text-decoration: underline; }
 
-    .chat-box {
-      background: var(--bg-light);
-      border: 1px solid #ddd;
-      border-radius: var(--radius);
-      padding: .75rem;
-      height: 80%;
-      overflow-y: auto;
-      margin-bottom: .75rem;
-      /* font-family: monospace; */
-      font-family: 'Raleway';
-      font-size: 1rem;
-    }
+    /* ---------- Mobile: transform side-panel into bottom sheet ---------- */
+    @media (max-width: 750px) {
+      .main { flex-direction: column; }
+      .resizer { display: none; }
+      .video-area { padding: .75rem; gap: .75rem; }
+      #start { width: 100%; }
+      .input-row .primary-btn { flex: 1 1 48%; }
 
-    .msg.you {
-      text-align: right;
-      color: var(--brand);
-    }
+      .video-wrapper { width: 100%; max-width: none; aspect-ratio: 16/9; }
 
-    .msg.peer {
-      text-align: left;
-    }
+      /* Local preview becomes a small tile BELOW the main video */
+      #localVideo.local-preview { position: static; width: 32vw; max-width: 140px; margin: .5rem auto 0; display: block; border-width: 2px; }
 
-    .input-row {
-      display: flex;
-      gap: .5rem;
-    }
-
-    .input-row input[type=text] {
-      flex: 1;
-      padding: .5rem .75rem;
-      border: 1px solid #ccc;
-      border-radius: var(--radius);
-    }
-
-    .send-btn {
-      background: linear-gradient(to right, #13768f, #2C5162);
-      color: #fff;
-      border: none;
-      border-radius: var(--radius);
-      padding: .5rem 1rem;
-      cursor: pointer;
-      font-family: 'Raleway', sans-serif;
-    }
-
-    .file-list a {
-      color: var(--brand);
-      text-decoration: none;
-    }
-
-    .file-list a:hover {
-      text-decoration: underline;
-    }
-
-    /* Stack on small screens */
-    @media(max-width:750px) {
-      .main {
-        flex-direction: column;
-      }
-
-      .resizer {
-        height: 6px;
-        width: 100%;
-        cursor: row-resize;
-      }
-
+      /* Bottom sheet behavior */
       .side-panel {
-        width: 100%;
-        height: 300px;
-        max-width: none;
-        border-left: none;
-        border-top: 1px solid #ccc;
+        position: fixed; left: 0; right: 0; bottom: 0; width: 100%; max-width: none; border-left: none; border-top: 1px solid #ccc;
+        height: min(72vh, 520px);
+        transform: translateY(100%);
+        transition: transform .28s ease;
+        z-index: 50;
+        /* Safe bottom padding for notches */
+        padding-bottom: max(.5rem, env(safe-area-inset-bottom));
       }
+      .side-panel.open { transform: translateY(0); }
+
+      /* FABs */
+      .fab-wrap { position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: .5rem; z-index: 60; pointer-events: auto; }
+      .fab { display: inline-flex; align-items: center; justify-content: center; width: 54px; height: 54px; border-radius: 999px; background: linear-gradient(180deg, #13768f, #2C5162); color: #fff; border: none; box-shadow: 0 6px 16px rgba(0,0,0,.18); font-weight: 700; font-size: .9rem; cursor: pointer; }
+      .fab small { font-weight: 600; }
+
+      /* Scrim behind the sheet */
+      .sheet-scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 40; display: none; }
+      /* When sheet opens, hide FABs to avoid overlapping the Send button */
+      .sheet-open .fab-wrap { display: none; }
+      .sheet-scrim.show { display: block; }
+
+      /* Close button inside sheet */
+      .sheet-close { position: absolute; top: .5rem; right: .5rem; background: transparent; border: none; font-size: 1.5rem; line-height: 1; cursor: pointer; color: #2C5162; }
     }
+
+    @media (max-width: 420px) { header { padding: .75rem; } .panel-tabs button { padding: .6rem; font-size: .95rem; } .send-btn { padding: .55rem .85rem; } }
+          /* Desktop hides FABs */
+    @media (min-width: 751px) { .fab-wrap { display: none; } }
   </style>
 </head>
 
 <body>
-  <header> Local WebRTC Chat & File Sharing</header>
+  <header>Local WebRTC Chat & File Sharing</header>
   <div class="main" id="mainContainer">
     <section class="video-area" id="videoPane">
       <button id="start" class="primary-btn">Start</button>
-      <div class="video-wrapper"><video id="remoteVideo" autoplay playsinline></video><video id="localVideo"
-          class="local-preview" autoplay muted playsinline></video></div>
-          <div class="input-row">
-  <button class="primary-btn" id="toggleVideo">Video Off</button>
-  <button class="primary-btn" id="toggleAudio">Mic Off</button>
-</div>
 
+      <div class="video-stack">
+        <div class="video-wrapper">
+          <video id="remoteVideo" autoplay playsinline></video>
+        </div>
+        <video id="localVideo" class="local-preview" autoplay muted playsinline></video>
+      </div>
+
+      <div class="input-row">
+        <button class="primary-btn" id="toggleVideo">Video Off</button>
+        <button class="primary-btn" id="toggleAudio">Mic Off</button>
+      </div>
     </section>
+
     <div class="resizer" id="dragBar"></div>
-    <aside class="side-panel" id="sidePane">
-      <div class="panel-tabs"><button id="chatTabBtn" class="active" onclick="switchTab('chat')">Chat</button><button
-          id="fileTabBtn" onclick="switchTab('file')">Files</button></div>
+
+    <aside class="side-panel" id="sidePane" aria-label="Chat and Files panel">
+      <button class="sheet-close" id="sheetClose" aria-label="Close panel" title="Close">×</button>
+      <div class="panel-tabs">
+        <button id="chatTabBtn" class="active" onclick="switchTab('chat')">Chat</button>
+        <button id="fileTabBtn" onclick="switchTab('file')">Files</button>
+      </div>
+
       <div id="chatTab" class="tab-content">
         <div id="chatBox" class="chat-box"></div>
-        <div class="input-row"><input type="text" id="messageInput" placeholder="Type a message..."><button
-            class="send-btn" onclick="sendMessage()">Send</button></div>
+        <div class="input-row">
+          <input type="text" id="messageInput" placeholder="Type a message...">
+          <button class="send-btn" onclick="sendMessage()">Send</button>
+        </div>
       </div>
+
       <div id="fileTab" class="tab-content" style="display:none;">
-        <div class="input-row"><input type="file" id="fileInput"><button class="send-btn" onclick="sendFile()">Send
-            File</button></div>
-        <p id="fileStatus" style="margin-top:.75rem;font-size:1rem;color:teal;"></p>
+        <div class="input-row">
+          <input type="file" id="fileInput">
+          <button class="send-btn" onclick="sendFile()">Send File</button>
+        </div>
+        <p id="fileStatus" style="margin-top:.25rem;font-size:1rem;color:teal;"></p>
         <div id="fileList" class="file-list"></div>
       </div>
     </aside>
   </div>
 
+  <!-- Mobile FABs + Scrim (hidden on desktop via media rules) -->
+  <div class="fab-wrap" aria-hidden="true">
+    <button class="fab" id="fabChat" aria-label="Open Chat"><span>💬</span></button>
+    <button class="fab" id="fabFiles" aria-label="Open Files"><span>📁</span></button>
+  </div>
+  <div class="sheet-scrim" id="sheetScrim"></div>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="client.js"></script>
   <script>
     /* ----- Tab switch ----- */
-    function switchTab(tab) { document.getElementById('chatTab').style.display = tab === 'chat' ? 'block' : 'none'; document.getElementById('fileTab').style.display = tab === 'file' ? 'block' : 'none'; document.getElementById('chatTabBtn').classList.toggle('active', tab === 'chat'); document.getElementById('fileTabBtn').classList.toggle('active', tab === 'file'); }
+    function switchTab(tab) {
+      const chat = document.getElementById('chatTab');
+      const files = document.getElementById('fileTab');
+      chat.style.display = (tab === 'chat') ? 'flex' : 'none';
+      files.style.display = (tab === 'file') ? 'flex' : 'none';
+      document.getElementById('chatTabBtn').classList.toggle('active', tab === 'chat');
+      document.getElementById('fileTabBtn').classList.toggle('active', tab === 'file');
+    }
 
-    /* ----- Splitter drag ----- */
+    /* ----- Splitter drag (desktop only) ----- */
     const dragBar = document.getElementById('dragBar');
     const sidePane = document.getElementById('sidePane');
     const main = document.getElementById('mainContainer');
+    const scrim = document.getElementById('sheetScrim');
+    const sheetClose = document.getElementById('sheetClose');
     let isDragging = false;
 
-    dragBar.addEventListener('mousedown', e => { if (window.innerWidth <= 750) return; isDragging = true; document.body.style.cursor = 'col-resize'; });
-    window.addEventListener('mousemove', e => { if (!isDragging) return; const containerRect = main.getBoundingClientRect(); let newWidth = containerRect.right - e.clientX; const min = 350, max = 600; newWidth = Math.min(Math.max(newWidth, min), max); sidePane.style.width = newWidth + 'px'; });
-    window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = 'default'; });
+    function enableDesktopDrag() {
+      if (window.innerWidth <= 750) return; // disabled on mobile
+      dragBar.addEventListener('mousedown', () => { isDragging = true; document.body.style.cursor = 'col-resize'; });
+      window.addEventListener('mousemove', e => {
+        if (!isDragging) return;
+        const containerRect = main.getBoundingClientRect();
+        let newWidth = containerRect.right - e.clientX;
+        const min = 300, max = 600;
+        newWidth = Math.min(Math.max(newWidth, min), max);
+        sidePane.style.width = newWidth + 'px';
+      });
+      window.addEventListener('mouseup', () => { isDragging = false; document.body.style.cursor = 'default'; });
+    }
 
-    /* ----- Chat helper ----- */
-    function appendMessage(sender, msg) { const box = document.getElementById('chatBox'); const line = document.createElement('div'); line.className = 'msg ' + (sender === 'You' ? 'you' : 'peer'); line.textContent = `${sender}: ${msg}`; box.appendChild(line); box.scrollTop = box.scrollHeight; }
+    enableDesktopDrag();
+
+    /* ----- Mobile bottom sheet controls ----- */
+    const fabChat = document.getElementById('fabChat');
+    const fabFiles = document.getElementById('fabFiles');
+
+    function openSheet(tab) {
+      if (tab) switchTab(tab);
+      sidePane.classList.add('open');
+      scrim.classList.add('show');
+      document.body.classList.add('sheet-open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeSheet() {
+      sidePane.classList.remove('open');
+      scrim.classList.remove('show');
+      document.body.classList.remove('sheet-open');
+      document.body.style.overflow = '';
+    }
+
+    fabChat.addEventListener('click', () => openSheet('chat'));
+    fabFiles.addEventListener('click', () => openSheet('file'));
+    scrim.addEventListener('click', closeSheet);
+    sheetClose.addEventListener('click', closeSheet);
+
+    window.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeSheet(); });
+
+    /* ----- Handle breakpoint transitions ----- */
+    function onResize() {
+      if (window.innerWidth <= 750) {
+        // start closed on mobile
+        closeSheet();
+      } else {
+        // restore desktop defaults
+        sidePane.style.width = '320px';
+        scrim.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    }
+    window.addEventListener('resize', onResize);
+    onResize();
+
+    /* ----- Chat helper (shared) ----- */
+    function appendMessage(sender, msg) {
+      const box = document.getElementById('chatBox');
+      const line = document.createElement('div');
+      line.className = 'msg ' + (sender === 'You' ? 'you' : 'peer');
+      line.textContent = `${sender}: ${msg}`;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
     window.appendMessage = appendMessage;
   </script>
 </body>
